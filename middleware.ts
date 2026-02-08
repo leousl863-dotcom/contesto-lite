@@ -8,6 +8,9 @@ export async function middleware(request: NextRequest) {
   // Update session for all requests
   const { response, session } = await updateSession(request)
 
+  // Forward the current pathname so the root layout can detect the route
+  response.headers.set("x-next-pathname", pathname)
+
   const redirectWithCookies = (url: URL) => {
     const redirectResponse = NextResponse.redirect(url)
     // # Reason: Preserve any auth cookie updates during redirect.
