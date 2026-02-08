@@ -3,6 +3,9 @@ import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
+import { headers } from "next/headers"
+import { createClient } from "@/lib/supabase/server"
+import { AppHeader } from "@/components/app-header"
 import "./globals.css"
 
 const geistSans = Geist({
@@ -22,14 +25,39 @@ export const metadata: Metadata = {
   generator: "v0.app",
 }
 
-export default function RootLayout({
+/** Routes where the shared header should NOT appear */
+const PUBLIC_AUTH_ROUTES = ["/login", "/signup", "/auth"]
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const headersList = await headers()
+  const pathname = headersList.get("x-next-pathname") ?? headersList.get("x-invoke-path") ?? ""
+
+  const isAuthRoute = PUBLIC_AUTH_ROUTES.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  )
+
+  let user: { email: string } | null = null
+
+  if (!isAuthRoute) {
+    try {
+      const supabase = await createClient()
+      const { data } = await supabase.auth.getUser()
+      if (data.user?.email) {
+        user = { email: data.user.email }
+      }
+    } catch {
+      // Auth check failed silently — user stays null
+    }
+  }
+
   return (
     <html lang="fr">
       <body className={`font-sans ${geistSans.variable} ${geistMono.variable} antialiased`}>
+        {!isAuthRoute && <AppHeader user={user} />}
         <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
         <Analytics />
       </body>
