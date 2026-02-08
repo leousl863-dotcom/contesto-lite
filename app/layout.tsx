@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 }
 
 /** Routes where the shared header should NOT appear */
-const PUBLIC_AUTH_ROUTES = ["/login", "/signup", "/auth"]
+const PUBLIC_AUTH_ROUTES = ["/login", "/signup", "/auth", "/forgot-password", "/reset-password"]
 
 export default async function RootLayout({
   children,
